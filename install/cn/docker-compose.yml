@@ -1,0 +1,76 @@
+services:
+  mysql:
+    image: crpi-anf589i27yv1djiz.cn-hangzhou.personal.cr.aliyuncs.com/aaronchen/astra-mysql:8.4.4
+    container_name: astra-mysql
+    ports:
+      - "33086:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=astra@byAaron
+      - MYSQL_DATABASE=astra
+      - MYSQL_CHARACTER_SET_SERVER=utf8mb4
+      - MYSQL_COLLATION_SERVER=utf8mb4_unicode_ci
+      - TZ=Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --slow-query-log=1
+      - --slow-query-log-file=/var/lib/mysql/slow.log
+      - --long-query-time=2
+      - --log-output=FILE
+      - --default-time-zone=+08:00
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pastra@byAaron"]
+      timeout: 5s
+      retries: 30
+      interval: 30s
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./script/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - astra-network
+
+  app:
+    image: crpi-anf589i27yv1djiz.cn-hangzhou.personal.cr.aliyuncs.com/aaronchen/astra-app:0.0.1
+    container_name: astra-backend
+    ports:
+      - "8062:8062"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/astra?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=astra@byAaron
+      - SPRING_PROFILES_ACTIVE=prod
+      - CORS_ALLOWED_ORIGINS=http://106.15.251.9:19926
+      - ASTRA_TASK_POOL_SCHEDULER_CORE_SIZE=2
+      - ASTRA_TASK_POOL_SCHEDULER_MAX_SIZE=4
+      - ASTRA_TASK_POOL_EXECUTION_CORE_SIZE=4
+      - ASTRA_TASK_POOL_EXECUTION_MAX_SIZE=8
+      - ASTRA_TASK_POOL_EXECUTION_QUEUE_CAPACITY=25
+      - ASTRA_TASK_POOL_EXECUTION_KEEP_ALIVE_SECONDS=30
+      - ASTRA_TASK_POOL_MAX_PENDING_TASKS=50
+      - ASTRA_TASK_POOL_MAX_MEMORY_USAGE=0.7
+      - LICENSE_FILE_PATH=/app/license/astra.license
+    volumes:
+      - license-data:/app/license
+    networks:
+      - astra-network
+
+  frontend:
+    image: crpi-anf589i27yv1djiz.cn-hangzhou.personal.cr.aliyuncs.com/aaronchen/astra-frontend:0.0.1
+    container_name: astra-frontend
+    ports:
+      - "19926:80"
+    depends_on:
+      - app
+    networks:
+      - astra-network
+
+volumes:
+  mysql-data:
+  license-data:
+
+networks:
+  astra-network:
+    driver: bridge
