@@ -15,3 +15,9 @@ astra 核心价值在于：
 * **日志可控**：自动记录每一次任务运行日志，支持在线查看、按时间筛选、批量删除，问题定位更高效。
 
 适用人群：需要同时管理多个 Python 项目的开发者、运维人员，或需要自动化运行 Python 脚本的团队 / 个人。
+
+执行如下命令到本地：git clone https://github.com/Aalron/astra-python-platform
+进入到 install 目录下，如果是在国内环境下呢，就进入 cn目录，然后直接执行如下命令即可，反之如果在国外环境下，就进入en目录下。同样都是执行如下命令
+docker compose up -d
+
+然后等待执行成功后，浏览器中输入 http://yourip:19926 登录即可
